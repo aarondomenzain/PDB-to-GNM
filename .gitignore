@@ -129,5 +129,7 @@ dmypy.json
 .pyre/
 
 # OS
-
 *.DS_store
+*.gz
+*.npy
+
