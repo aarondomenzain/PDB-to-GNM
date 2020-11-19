@@ -81,7 +81,10 @@ def gnmanalysis_models(protname, n_models):
         listEigvals[n] = Eigvals
         listEigvecs[n] = Eigvecs
         
-    return (listEnergies, listEigvals, listEigvecs)
+    np.save('../results/' + protname + "_model_energies.npy", listEnergies)
+    np.save('../results/' + protname + "_eigenvalues.npy", listEigvals)
+    np.save('../results/' + protname + "_eigenvectors.npy", listEigvecs)
+    # return (listEnergies, listEigvals, listEigvecs)
 
 def hist_plot(frequencies, protname, color):
     
