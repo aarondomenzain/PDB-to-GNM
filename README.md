@@ -1,7 +1,6 @@
 # PDB-to-GNM
 Apply Normal Mode Analysis to a Protein Data Bank structure (PDB) using Gaussian Network Modelling
 
-- Brief Description
 
 
 Last update: 2020-11-19
@@ -10,7 +9,7 @@ This repository is administered by [@aarondomenzain](https://github.com/aarondom
 
 ## Installation
 ### Required Software
-* Python 3.x.x
+* [Python 3.x.x] (https://www.python.org/downloads/)
 * [PIP](https://pip.pypa.io/en/stable/installing/) 
 ### Dependencies - Recommended Software
 #### Python Libraries
