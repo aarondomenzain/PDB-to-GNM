@@ -10,7 +10,6 @@ from prody import *
 import matplotlib.pyplot as plt
 import numpy as np
 
-
 #Compute free energy from given PDB structure
 def gnmanalysis (protPDB, model_number):
     p = parsePDB(protPDB, model = model_number)
@@ -39,25 +38,49 @@ def gnmanalysis (protPDB, model_number):
             # Add Calpha atoms to network
             network = calphas
     
-    #Gaussian Network Modelling
+    # Gaussian Network Modelling
     gnm = GNM(protPDB)
     gnm.buildKirchhoff(network, cutoff = 10.0, gamma = 1.0)
 
-    #Kirchoff Matrix
+    # Kirchoff Matrix
     K = gnm.getKirchhoff()
 
-    #Calculate Normal Modes
+    # Calculate Normal Modes
     gnm.calcModes(1000) #All normal modes (default is 20)
 
-    #Eigenvalues and eigenvectors
+    # Eigenvalues and eigenvectors
     Eigvals = gnm.getEigvals() #This is a vector containing eigenfrequencies
-    Eigvecs = gnm.getEigvecs() #This is a matrix, each column is an eigenvector (normal mode)
+    Eigvecs = gnm.getEigvecs() #This is a matrix in which each column is an eigenvector (normal mode)
     
-
-    #Compute Free Energy in KT units (F)
+    # Calculate number of modes
+    n = len(Eigvals)
+    
+    # Generate mobility plot (Squared fluctuations) for each mode
+    
+    # if model_number == 1:
+    #     for i in range (0, n, 5):
+    #         plt.figure()
+    #         showSqFlucts(gnm[i], hinges=True);
+    #         plt.ylabel("Square fluctuations (Å^2)")
+    #         plt.xlabel("Node index")
+    #         if i != 0:
+    #             plt.ylim(0, 0.5)
+    #         plt.savefig('../results/' + protPDB + "/" + protPDB + "_mode_" + str(i) + ".png", dpi=300)
+    
+    for i in range (4):
+        plt.figure()
+        showSqFlucts(gnm[i], hinges=True)
+        plt.ylim(0, 0.5)
+        plt.show()
+    
+    # Compute Free Energy in KT units (F)
     E = np.sum(np.log(Eigvals))
     
     return (E, Eigvals, Eigvecs)
+
+
+
+
 
 #Iterates over the PDB structure number model 
 def gnmanalysis_models(protname, n_models):
@@ -81,9 +104,9 @@ def gnmanalysis_models(protname, n_models):
         listEigvals[n] = Eigvals
         listEigvecs[n] = Eigvecs
         
-    np.save('../results/' + protname + "_model_energies.npy", listEnergies)
-    np.save('../results/' + protname + "_eigenvalues.npy", listEigvals)
-    np.save('../results/' + protname + "_eigenvectors.npy", listEigvecs)
+    np.save('../results/' + protname + "/" + protname + "_model_energies.npy", listEnergies)
+    np.save('../results/' + protname + "/" + protname + "_eigenvalues.npy", listEigvals)
+    np.save('../results/' + protname + "/" + protname + "_eigenvectors.npy", listEigvecs)
     # return (listEnergies, listEigvals, listEigvecs)
 
 def hist_plot(frequencies, protname, color):
