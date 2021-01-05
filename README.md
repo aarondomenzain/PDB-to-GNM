@@ -17,12 +17,23 @@ This repository is administered by [@aarondomenzain](https://github.com/aarondom
 * Matplotlib
 * Scipy
 * Prody
+#### Recommended Python environment (for editing and executing)
+* [Spyder] (https://www.spyder-ide.org) 
 ### Installation Instructions
 * Clone `main` branch from [here](https://github.com/aarondomenzain/PDB-to-GNM).
 * Open a terminal window and run the following commands:
 ```
 pip install numpy scipy matplotlib prody
 ```
+### Executation
+* Open the file `.py` with Spyder and run the program to load functions.
+#### Functions
+* The available functions and their arguments and outputs are described below
+##### gnmanalysis(PDBname, ModelNumber)
+* `PDBname` must be a string of four characters in ' ' or " " corresponding to a PDB structural set in Protein Data Bank. 
+* `ModelNumber` must be the number of models contained within the same PDB structural set
+
+
 ## Development Guidelines
 
 Anybody is welcome to contribute to the development of this repository, but please abide by the following guidelines.
