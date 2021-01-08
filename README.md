@@ -18,7 +18,7 @@ This repository is administered by [@aarondomenzain](https://github.com/aarondom
 * Scipy
 * Prody
 #### Recommended Python environment (for editing and executing)
-* [Spyder] (https://www.spyder-ide.org) 
+* [Spyder](https://www.spyder-ide.org) 
 ### Installation Instructions
 * Clone `main` branch from [here](https://github.com/aarondomenzain/PDB-to-GNM).
 * Open a terminal window and run the following commands:
