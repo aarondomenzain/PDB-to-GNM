@@ -9,11 +9,18 @@ Created on Sun Jun 28 22:12:37 2020
 from prody import *
 import matplotlib.pyplot as plt
 import numpy as np
+import os
 
-#Compute free energy from given PDB structure
+#Compute free energy, eigenvalues and eigenvectors of a Gaussian Network Model from given PDB structure
+    # Arguments:
+        # protPDB; PDB ID of structure to apply GNM
+        # model_number: Structure index (within the same PDB) to apply GNM
+    # Outputs:
+        # 3 element list: Free Energy (in KbT) , Eigenvalues, Eigenvectors
+
 def gnmanalysis (protPDB, model_number):
     p = parsePDB(protPDB, model = model_number)
-    
+
     # Alpha Carbons
     calphas = p.select('calpha')
     
@@ -40,7 +47,7 @@ def gnmanalysis (protPDB, model_number):
     
     # Gaussian Network Modelling
     gnm = GNM(protPDB)
-    gnm.buildKirchhoff(network, cutoff = 10.0, gamma = 1.0)
+    gnm.buildKirchhoff(network, cutoff = 10.0 , gamma = 1.0 )
 
     # Kirchoff Matrix
     K = gnm.getKirchhoff()
@@ -48,48 +55,46 @@ def gnmanalysis (protPDB, model_number):
     # Calculate Normal Modes
     gnm.calcModes(1000) #All normal modes (default is 20)
 
-    # Eigenvalues and eigenvectors
+    # Get Eigenvalues and eigenvectors
     Eigvals = gnm.getEigvals() #This is a vector containing eigenfrequencies
     Eigvecs = gnm.getEigvecs() #This is a matrix in which each column is an eigenvector (normal mode)
     
-    # Calculate number of modes
-    n = len(Eigvals)
+
+    # Generate mobility plot (Squared fluctuations in arbitrary units) for each mode for the FIRST model
+    if model_number == 1:
+        
+        # First 5 modes
+        n_modes = 5
     
-    # Generate mobility plot (Squared fluctuations) for each mode
+        # plotmobility(protPDB, gnm, n_modes) 
+
     
-    # if model_number == 1:
-    #     for i in range (0, n, 5):
-    #         plt.figure()
-    #         showSqFlucts(gnm[i], hinges=True);
-    #         plt.ylabel("Square fluctuations (Å^2)")
-    #         plt.xlabel("Node index")
-    #         if i != 0:
-    #             plt.ylim(0, 0.5)
-    #         plt.savefig('../results/' + protPDB + "/" + protPDB + "_mode_" + str(i) + ".png", dpi=300)
+    # Compute Free Energy F in KbT units 
+    Kb = 1.380649 * (10 ** -23) # Boltzmann constant (in J/K)
+    hbar = 3.16152649 * (10 ** -26) # Planck's reduced constant (in J*s)
+    T = 310 # Human body temperature (in K)
+    N = network.numAtoms() # Number of nodes in the network
     
-    for i in range (4):
-        plt.figure()
-        showSqFlucts(gnm[i], hinges=True)
-        plt.ylim(0, 0.5)
-        plt.show()
+    # We force the number of nodes to be equal to the number of modes for NC+SL3 complex
+    # if protPDB is '1a1t':
+    #     N = 74
     
-    # Compute Free Energy in KT units (F)
-    E = np.sum(np.log(Eigvals))
+    # Frecuencies w are proportional to the squared root of eigenvalues K
+    frequencies = np.sqrt( Eigvals ) 
+    
+    E =  - 3 * (N-1) * np.log( (Kb * T) / hbar )  +  (1/1) * np.sum( np.log( frequencies ) )
     
     return (E, Eigvals, Eigvecs)
 
 
-
-
-
 #Iterates over the PDB structure number model 
-def gnmanalysis_models(protname, n_models):
+def gnmanalysis_models(protPDB, n_models):
     #Initialize a list of zeros of length (n_models)
     listEnergies = np.zeros(n_models)
     
     for n in range (n_models):
         
-        Energy, Eigvals, Eigvecs = gnmanalysis(protname, n+1)
+        Energy, Eigvals, Eigvecs = gnmanalysis(protPDB, n+1)
         
         #No encontré manera bonita de iniciar matrices de ceros porque necesito conocer el número de eigenvectores y su tamaño
         if n ==0:
@@ -104,27 +109,51 @@ def gnmanalysis_models(protname, n_models):
         listEigvals[n] = Eigvals
         listEigvecs[n] = Eigvecs
         
-    np.save('../results/' + protname + "/" + protname + "_model_energies.npy", listEnergies)
-    np.save('../results/' + protname + "/" + protname + "_eigenvalues.npy", listEigvals)
-    np.save('../results/' + protname + "/" + protname + "_eigenvectors.npy", listEigvecs)
-    # return (listEnergies, listEigvals, listEigvecs)
+        # Checks if directory exists. If not, creates a directory with the PDB ID name
+        if os.path.isdir('../results/' + protPDB + '/') is False:
+            os.mkdir('../results/' + protPDB + '/')
 
-def hist_plot(frequencies, protname, color):
+    np.save('../results/' + protPDB + "/" + protPDB + "_model_energies.npy", listEnergies)
+    np.save('../results/' + protPDB + "/" + protPDB + "_eigenvalues.npy", listEigvals)
+    np.save('../results/' + protPDB + "/" + protPDB + "_eigenvectors.npy", listEigvecs)
+    # # return (listEnergies, listEigvals, listEigvecs)
+
+
+
+
+# Draw mobility plot for first N modes
+    # Arguments:
+        # protPDB:PDB ID of desired protein
+        # gnm: Gaussian Network Model ProDy instance
+        # N: Number of modes to process
     
-    # List of colors
-    # 'lighblue'
-    # 'lightgreen'
-    # 'salmon'
+    # Outputs:
+        # N images in .png format with name: protPDB/protPDB_SqFlucts_Mode_i.png with i= 1,2,..,N
     
-    plt.hist(frequencies, density=1, color = color, label = protname)
-    plt.xlabel("Eigenfrecuencias (U.A.)")
-    plt.ylabel("Densidad de estados g(w)")
-    plt.xlim(0, 25)
-    plt.ylim(0, 0.1)
-    plt.legend()
-    plt.show()
+def plotmobility(protPDB, gnm, N):
+    # Checks if directory exists. If not, creates a directory with the PDB ID name
+    if os.path.isdir('../results/' + protPDB + '/') is False:
+        os.mkdir('../results/' + protPDB + '/')
 
-
+    # First 5 lowest frequency modes 
+    for i in range (N):
+        if i < N:
+            
+            plt.figure()
+            showSqFlucts(gnm[i], hinges=True)
+            
+            if i < 2:
+                plt.ylim(0, 3)
+            else:
+                plt.ylim(0, 0.5)
+                
+            plt.ylabel("Square fluctuations (A. U.)")
+            plt.xlabel("Residue")
+            plt.savefig('../results/' + protPDB + '/' + protPDB + "_SqFlucts_Mode_" + str(i+1) + ".png", dpi=300)
+            plt.show()
+            
+            
+    
 #####################      INSTRUCTIONS       ##########################
     
 # GNM Normal Mode Analysis
@@ -132,7 +161,7 @@ def hist_plot(frequencies, protname, color):
 
 # PDB list to analyze:
     #Unbounded 
-#     '1AAF' : Unbounded NC from HIV-1 (20 models) color = 'gray'
+#     '1aaf' : Unbounded NC from HIV-1 (20 models) color = 'gray'
 #     '1ESY' : Unbounded SL2 from HIV-1 (19 models) color = 'lightblue'
 #     '1BNO' : Unbounded SL3 from HIV-1 (11 models) color = 'lightgreen'
     
@@ -143,9 +172,6 @@ def hist_plot(frequencies, protname, color):
 
 # PDB_list = ['1AAF', '1ESY', '1BNO', '1F6U', '1A1T' ]
 # N_list = [ 20, 19, 11, 20, 25 ]
-
-
-
 
 
 # STEPS 
@@ -164,83 +190,98 @@ def hist_plot(frequencies, protname, color):
   # Calculation of Gibbs free energy distribution of the PDB file, eigenfrequencies and eigenvectors
     # E, eigvals, eigvecs = gnmanalysis_models(prot, N)
     
-    
- # Save data to Numpy files
-    # np.save(protPDB + "_model_energies.npy", E)
-    # np.save(protPDB + "_eigenvalues.npy", eigvals)
-    # np.save(protPDB + "_eigenvectors.npy", eigvecs)
+# gnmanalysis_model
 
-     # For loading Numpy files
-        # E = np.load( protPDB + "_model_energies.npy" )
-        # eigvals = np.load( protPDB + "_eigenvalues.npy" )
-        # eigvecs = np.load( protPDB + "_eigvecs.npy" )
-
-    
-# #Quick histogram of first model
-# plt.hist(eigvals[0], label= 'Distribución de estados', density= True, color= 'Green')
-# plt.xlabel('Eigenfrecuencias (U.A.)')
-# plt.ylabel('Densidad de estados')
-# plt.ylim(0, 0.2)
-# plt.grid(True)
-# plt.legend()
-
-# NCenergy = np.load("1aaf_model_energies.npy")
-# SL2energy = np.load("1esy_model_energies.npy")
-# SL3energy = np.load("1bn0_model_energies.npy")
-# NCSL2energy = np.load("1f6u_model_energies.npy")
-# NCSL3energy = np.load("1a1t_model_energies.npy")
-
-# NCeigvals = np.load("1aaf_eigenvalues.npy")
-# SL2eigvals = np.load("1esy_eigenvalues.npy")
-# SL3eigvals = np.load("1bn0_eigenvalues.npy")
-# NCSL2eigvals = np.load("1f6u_eigenvalues.npy")
-# NCSL3eigvals = np.load("1a1t_eigenvalues.npy")
+# gnmanalysis_models('1aaf', 20)
+# gnmanalysis_models('1esy', 19)
+# gnmanalysis_models('1bn0', 11)
+# gnmanalysis_models('1f6u', 20)
+# gnmanalysis_models('1a1t', 25)
+# gnmanalysis_models('1a1t.pdb', 25)
 
 
+# 4. LOAD DATA
+
+# NCenergy = np.load("../results/1aaf/1aaf_model_energies.npy")
+# SL2energy = np.load("../results/1esy/1esy_model_energies.npy")
+# SL3energy = np.load("../results/1bn0/1bn0_model_energies.npy")
+# NCSL2energy = np.load("../results/1f6u/1f6u_model_energies.npy")
+# # NCSL3energy = np.load("../results/1a1t/1a1t_model_energies.npy")
+# NCSL3energy = np.load("../results/1a1t.pdb/1a1t.pdb_model_energies.npy")
+
+# NCeigvals = np.load("../results/1aaf/1aaf_eigenvalues.npy")
+# SL2eigvals = np.load("../results/1esy/1esy_eigenvalues.npy")
+# SL3eigvals = np.load("../results/1bn0/1bn0_eigenvalues.npy")
+# NCSL2eigvals = np.load("../results/1f6u/1f6u_eigenvalues.npy")
+# # NCSL3eigvals = np.load("../results/1a1t/1a1t_eigenvalues.npy")
+# NCSL3eigvals = np.load("../results/1a1t.pdb/1a1t.pdb_eigenvalues.npy")
+
+# NCsim_energy = np.load( "../results/NC_simulation/NC_simulation_model_energies.npy" ) 
+# NCsim_eigvals = np.load( "../results/NC_simulation/NC_simulation_eigenvalues.npy" ) 
+
+# NCSL2sim_energy = np.load( "../results/NC-SL2_simulation/NC-SL2_simulation_model_energies.npy" ) 
+# NCSL2sim_eigvals = np.load( "../results/NC-SL2_simulation/NC-SL2_simulation_eigenvalues.npy" ) 
 
 
-# # Load data 
-# complex = [NCenergy, SL2energy, SL3energy, NCSL2energy, NCSL3energy]
-# names = ['NC', 'SL2', 'SL3', 'NC+SL2', 'NC+SL3']
+# # Calculate binding energy from mean free energy changes
+# E_NCSL3 = np.mean(NCSL3energy) - np.mean(NCenergy) - np.mean(SL3energy)
+# E_NCSL3_std = ( np.std(NCSL3energy) - np.std(NCenergy) - np.std(SL3energy) ) / np.sqrt( NCSL3eigvals.shape[1] )
 
-# highs = [NCenergy, NCSL2energy, NCSL3energy]ß
+
+# E_NCSL2 = np.mean(NCSL2energy) - np.mean(NCenergy) - np.mean(SL2energy)
+# E_NCSL2_std = ( np.std(NCSL2energy) - np.std(NCenergy) - np.std(SL2energy) ) / np.sqrt( NCSL2eigvals.shape[1] )
+
+# # ztest = ( np.mean( NCSL3energy ) - np.mean( NCSL2energy ) ) / np.sqrt(( np.std(NCSL3energy)**2 - np.std(NCSL2energy)**2 ))
+
+# print()
+# print("NC-SL2 binding energy :", E_NCSL2)
+# print("NC-SL3 binding energy :", E_NCSL3)
+
+
+# # ## Free energy distributions
+# #     # Labels for plots
+# complex = [SL2energy, SL3energy, NCenergy, NCSL2energy, NCSL3energy]
+# names = ["SL2", "SL3", 'NC', 'NC+SL2', 'NC+SL3']
+
+# highs = [NCenergy, NCSL2energy, NCSL3energy]
 # highnames = ['NC', 'NC+SL2', 'NC+SL3']
 
-# lows = [SL2energy, SL3energy]
-# lownames = ["SL2", "SL3"]
+# SLcomplexes = [NCSL2energy, NCSL3energy]
+# SLcomplexes_names = ['NC+SL2', 'NC+SL3']
 
-
-# ## Free energy distributions
-# plt.boxplot(complex, notch = False, showmeans = True, meanline = True)#, showfliers = False)
+# plt.boxplot(complex, notch = False, showmeans = True, meanline = True, showfliers = False)
 # plt.xticks([1, 2, 3, 4, 5], names)
 # plt.ylabel('Energía libre (KT)')
 # plt.show()
     
-# plt.boxplot(highs, notch = False, showmeans = True, meanline = True)#, showfliers = False)
+# plt.boxplot(highs, notch = False, showmeans = True, meanline = True, showfliers = False)
 # plt.xticks([1, 2, 3], highnames)
 # plt.ylabel('Energía libre (KT)')
 # plt.show()
 
-# plt.boxplot(lows, notch = False, showmeans = True, meanline = True)#, showfliers = False)
-# plt.xticks([1, 2], lownames)
+# plt.boxplot(SLcomplexes, notch = False, showmeans = True, meanline = True, showfliers = True)
+# plt.xticks([1, 2], SLcomplexes_names)
 # plt.ylabel('Energía libre (KT)')
 # plt.show()
 
 
-# fig, axs = plt.subplots(1,5, sharey=True, sharex = True, tight_layout=True)
+
+
+
+
+
+# fig, axs = plt.subplots(1,3, sharey=False, sharex = True, tight_layout=True)
 
 
 # axs[0].hist(NCeigvals[1], density = True, label = names[0])
-# axs[1].hist(SL2eigvals[0], density = True, label = names[1])
-# axs[2].hist(SL3eigvals[0], density = True, label = names[2])
-# axs[3].hist(NCSL2eigvals[0], density = True, label = names[3])
-# axs[4].hist(NCSL3eigvals[0], density = True, label = names[4])
+# axs[1].hist(BCSL2eigvals[0], density = True, label = names[1])
+# axs[2].hist(NCSL3eigvals[0], density = True, label = names[2])
 # plt.ylim( 0, 0.6 )
 # plt.legend()
 # plt.show()
 
-# E_NCSL3 = np.mean(NCSL3energy) - np.mean(NCenergy) - np.mean(SL3energy)
-# E_NCSL2 = np.mean(NCSL2energy) - np.mean(NCenergy) - np.mean(SL2energy)
+
+
 
 
 
