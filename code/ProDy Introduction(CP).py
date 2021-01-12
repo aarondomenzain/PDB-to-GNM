@@ -121,6 +121,44 @@ def gnmanalysis_models(protPDB, n_models):
 
 
 
+    #Iterates over a list of specific single-model PDB files associated with one biological structure
+    
+    # protPDB_list is a list containing custom pdb file names as strings in ' ' or " ". Termination .pdb must be specified
+    # protPDB_name is a string containing the name of the protein asociated with all models
+def gnmanalysis_custom(protPDB_list, protPDB_name):
+    
+    n = 0
+    for protPDB in protPDB_list:
+        Energy, Eigvals, Eigvecs = gnmanalysis(protPDB, 1)
+        
+        # No encontré manera bonita de iniciar matrices de ceros porque necesito conocer el número de eigenvectores y su tamaño
+        if n == 0:
+            
+            N_models = len(protPDB_list)
+            Neigvals = len(Eigvals) 
+            Neigvecs = len(Eigvecs)
+            
+            #Calculate dimensions of eigenvectors matrix
+            [N_vecs, vecs_length] = Eigvecs.shape
+            
+            #Initialize zeros array
+            listEigvals = np.zeros([N_models, Neigvals])
+            listEigvecs = np.zeros([N_models, N_vecs, vecs_length])
+            listEnergies = np.zeros( N_models )
+        
+        listEnergies[n] = Energy
+        listEigvals[n] = Eigvals
+        listEigvecs[n] = Eigvecs
+        
+        n = n + 1
+        # Checks if directory exists. If not, creates a directory with the PDB ID name
+        if os.path.isdir('../results/' + protPDB_name + '/') is False:
+            os.mkdir('../results/' + protPDB_name + '/')
+
+    np.save('../results/' + protPDB_name + "/" + protPDB_name + "_model_energies.npy", listEnergies)
+    np.save('../results/' + protPDB_name + "/" + protPDB_name + "_eigenvalues.npy", listEigvals)
+    np.save('../results/' + protPDB_name + "/" + protPDB_name + "_eigenvectors.npy", listEigvecs)
+
 # Draw mobility plot for first N modes
     # Arguments:
         # protPDB:PDB ID of desired protein
