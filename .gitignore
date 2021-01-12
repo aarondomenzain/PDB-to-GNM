@@ -134,4 +134,5 @@ dmypy.json
 *.npy
 *.png
 *.jpg
+*.pdb
 
