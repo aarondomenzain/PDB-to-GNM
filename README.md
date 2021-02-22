@@ -29,7 +29,7 @@ pip install numpy scipy matplotlib prody
 Open the file `.py` with Spyder and run the program to load functions.
 #### Functions
 The available functions and their arguments and outputs are described below
-##### * gnmanalysis(PDBname, ModelNumber)
+##### gnmanalysis(PDBname, ModelNumber)
 * `PDBname` must be a string of four characters in ' ' or " " corresponding to a PDB structural set in Protein Data Bank. 
 * `ModelNumber` must be the number of models contained within the same PDB structural set
 
