@@ -1,11 +1,11 @@
 # PDB-to-GNM
-Apply Normal Mode Analysis to a Protein Data Bank structure (PDB) using Gaussian Network Modelling
+Apply Normal Mode Analysis to a Protein Data Bank structure (PDB) using Gaussian Network Modelling. 
 
 
 
 Last update: 2020-11-19
 
-This repository is administered by [@aarondomenzain](https://github.com/aarondomenzain), Departamento de Física, Área de Física de Líquidos, Universidad Autónoma Metropolitana Unidad Iztapalapa.
+This repository is administered by [@aarondomenzain](https://github.com/aarondomenzain), Departamento de Física, Área de Física de Líquidos, Universidad Autónoma Metropolitana Unidad Iztapalapa. This repository was part of the development of my bachelor's thesis in Physics.
 
 ## Installation
 ### Required Software
