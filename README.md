@@ -5,7 +5,7 @@ Apply Normal Mode Analysis to a Protein Data Bank structure (PDB) using Gaussian
 
 Last update: 2020-11-19
 
-This repository is administered by [@aarondomenzain](https://github.com/aarondomenzain), Departamento de Física, Área de Física de Líquidos, Universidad Autónoma Metropolitana Unidad Iztapalapa. This repository was part of the development of my bachelor's thesis in Physics.
+This repository was administered by [@aarondomenzain](https://github.com/aarondomenzain), when I formed part of Departamento de Física, Área de Física de Líquidos, Universidad Autónoma Metropolitana Unidad Iztapalapa. This repository was part of the development of my bachelor's thesis in Physics.
 
 ## Installation
 ### Required Software
